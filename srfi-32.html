@@ -246,6 +246,149 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   Schemes made life a lot easier writing this code. I appreciate
   the authors making their source available under such open
   terms.</p>
+  <h1>Design rules</h1>
+  <h2>What vs. how</h2>
+  <p>There are two different interfaces: "what" (simple) & "how"
+  (detailed).</p>
+  <ul>
+    <li>
+      <p>Simple: you specify semantics: datatype (list or vector),
+      mutability, and stability.</p>
+    </li>
+    <li>
+      <p>Detailed: you specify the actual algorithm (quick, heap,
+      insert, merge). Different algorithms have different
+      properties, both semantic & pragmatic, so these exports are
+      necessary.</p>
+      <p>It is necessarily the case that the specifications of
+      these procedures make statements about execution
+      "pragmatics." For example, the sole distinction between heap
+      sort and quick sort -- both of which are provided by this
+      library -- is one of execution time, which is not a
+      "semantic" distinction. Similar resource-use statements are
+      made about "iterative" procedures, meaning that they can
+      execute on input of arbitrary size without needing to
+      allocate an unbounded number of stack frames.</p>
+    </li>
+  </ul>
+  <h2>Consistency across function signatures</h2>
+  <p>The two interfaces share common function signatures wherever
+  possible, to facilitate switching a given call from one procedure
+  to another.</p>
+  <h2>Data parameter first, less-than parameter after</h2>
+  <p>These procedures uniformly observe the following parameter
+  order: the data to be sorted come before the the comparison
+  function. That is, we write <code>(sort lis &lt;)</code> not
+  <code>(sort &lt; lis)</code>. This is consistent with every
+  single implementation out there, with the sole exception of Chez
+  Scheme.</p>
+  <p>In my opinion, it would be more consistent with other Scheme
+  libraries to put the ordering function first -- the "operation
+  currying" convention. (E.g., consider FOR-EACH or MAP or FIND.) I
+  decided to leave things as they are in favor of near-total
+  backwards compatibility with existing practice.</p>
+  <p>[Perhaps this should be discussed.]</p>
+  <h2>Ordering, comparison functions & stability</h2>
+  <p>These routines take a &lt; comparison function, not a &lt;=
+  comparison function, and they sort into increasing order. The
+  difference between a &lt; spec and a &lt;= spec comes up in two
+  places:</p>
+  <ul>
+    <li>the definition of an ordered or sorted data set, and</li>
+    <li>the definition of a stable sorting algorithm.</li>
+  </ul>
+  <ul>
+    <li>
+      <p>We say that a data set (a list or vector) is *sorted* or
+      *ordered* if it contains no adjacent pair of values ... X Y
+      ... such that Y &lt; X.</p>
+      <p>In other words, scanning across the data never takes a
+      "downwards" step.</p>
+      <p>If you use a &lt;= procedure where these algorithms expect
+      a &lt; procedure, you may not get the answers you expect. For
+      example, the LIST-SORTED? function will return false if you
+      pass it a &lt;= comparison function and an ordered list
+      containing adjacent equal elements.</p>
+    </li>
+    <li>
+      <p>A "stable" sort is one that preserves the pre-existing
+      order of equal elements. Suppose, for example, that we sort a
+      list of numbers by comparing their absolute values, i.e.,
+      using comparison function <code>(lambda (x y) (&lt; (abs x)
+      (abs y)))</code> If we sort a list that contains both 3 and
+      -3: <code>... 3 ... -3 ...</code> then a stable sort is an
+      algorithm that will not swap the order of these two elements,
+      that is, the answer will look like <code>... 3 -3 ...</code>
+      not <code>... -3 3 ...</code></p>
+      <p>Choosing &lt; for the comparison function instead of &lt;=
+      affects how stability is coded. Given an adjacent pair X Y,
+      (&lt; y x) means "Y should be moved in front of X" --
+      otherwise, leave things as they are. So using a &lt;=
+      function where a &lt; function is expected will *invert*
+      stability.</p>
+      <p>This is due to the definition of equality, given a &lt;
+      comparator:</p>
+      <pre>(and (not (&lt; x y)) (not (&lt; y x)))
+      </pre>
+      <p>The definition is rather different, given a &lt;=
+      comparator:</p>
+      <pre> (and (&lt;= x y) (&lt;= x y))</pre>
+    </li>
+    <li>
+      <p>A "stable" merge is one that reliably favors one of its
+      data sets when equal items appear in both data sets. *All
+      merge operations in this library are stable*, breaking ties
+      between data sets in favor of the first data set -- elements
+      of the first list come before equal elements in the second
+      list.</p>
+      <p>So, if we are merging two lists of numbers ordered by
+      absolute value using the stable merge operation
+      LIST-MERGE</p>
+      <pre>
+    (list-merge '(0 -2 4 8 -10) '(-1 3 -4 7)
+                (lambda (x y) (&lt; (abs x) (abs y))))
+                                 </pre>
+      <p>reliably places the 4 of the first list before the
+      equal-comparing -4 of the second list:</p>
+      <pre>(0 -1 -2 4 -4 7 8 -10)</pre>
+    </li>
+  </ul>
+  <p>In short, if your comparison function F answers true to (F x
+  x), then using a stable sorting or merging algorithm will not
+  give you a stable sort or merge, and LIST-SORTED? may surprise
+  you. Note that you can synthesize a &lt; function from a &lt;=
+  function with <code>(lambda (x y) (not (&lt;= y x)))</code> if
+  need be.</p>
+  <p>Precise definitions give sharp edges to tools, but require
+  care in use. "Measure twice, cut once."</p>
+  <p>I have adopted the choice of &lt; from Common Lisp. I assume
+  they had a good reason for adopting &lt; instead of &lt;=. I'd
+  love to know what this reason is; send me email if you can
+  explain it, please.</p>
+  <h2>All vector operations accept optional subrange
+  parameters</h2>
+  <p>The vector operations specified below all take optional
+  START/END arguments indicating a selected subrange of a vector's
+  elements. If a START parameter or START/END parameter pair is
+  given to such a procedure, they must be exact, non-negative
+  integers, such that <code>0 &lt;= START &lt;= END &lt;=
+  (VECTOR-LENGTH V)</code> where V is the related vector parameter.
+  If not specified, they default to 0 and the length of the vector,
+  respectively. They are interpreted to select the range
+  [START,END), that is, all elements from index START (inclusive)
+  up to, but not including, index END.</p>
+  <h2>Required vs. allowed side-effects</h2>
+  <p>LIST-SORT! and LIST-STABLE-SORT! are allowed, but not
+  required, to alter their arguments' cons cells to construct the
+  result list. This is consistent with the what-not-how character
+  of the group of procedures to which they belong (the "sort-lib"
+  package).</p>
+  <p>The LIST-DELETE-NEIGHBOR-DUPS!, LIST-MERGE! and
+  LIST-MERGE-SORT! procedures, on the other hand, provide specific
+  algorithms, and, as such, explicitly commit to the use of
+  side-effects on their input lists in order to guarantee their key
+  algorithmic properties (e.g., linear-time operation,
+  constant-space stack use).</p>
   <address>
     Editor: Francisco Solsona
   </address>
