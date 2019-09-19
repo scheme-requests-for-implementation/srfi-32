@@ -86,7 +86,166 @@ list-delete-neighbor-dups!      vector-delete-neighbor-dups!
 
 heap-sort   quick-sort   insert-sort   list-merge-sort   vector-merge-sort
 heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
+  </pre>
+  <h1>Introduction</h1>
+  <p>As I'll detail bewlow, I wasn't very happy with the state of
+  the Scheme world for sorting and merging lists and vectors. So I
+  have designed and written a fairly comprehensive sorting &
+  merging toolkit. It is</p>
+  <ul>
+    <li>very portable,</li>
+    <li>much better code than what is currently in Elk, Gambit,
+    Bigloo, Scheme-&gt;C, MzScheme, RScheme, Scheme48, MIT Scheme,
+    or slib, and</li>
+    <li>priced to move: free code.</li>
+  </ul>
+  <p>The package includes</p>
+  <ul>
+    <li>Vector insert sort (stable)</li>
+    <li>Vector heap sort</li>
+    <li>Vector quick sort (with median-of-3 pivot picking)</li>
+    <li>Vector merge sort (stable)</li>
+    <li>Pure and destructive list merge sort (stable)</li>
+    <li>Stable vector and list merge</li>
+    <li>Miscellaneous sort-related procedures: Vector and list
+    merging, sorted? predicates, vector binary search, vector and
+    list delete-equal-neighbor procedures.</li>
+    <li>A general, non-algorithmic set of procedure names for
+    general sorting and merging.</li>
+  </ul>
+  <p>Scheme programmers may want to adopt this package. I'd like
+  Scheme implementors to adopt this code and its API -- in fact,
+  the code is a bribe to make it easy for implementors to converge
+  on the suggested API. I mean, you'd really have to be a boor to
+  take this free code I wrote and mutate its interface over to your
+  incompatible, unportable API, wouldn't you? But you could, of
+  course -- it's freely available. More in the spirit of the
+  offering, you could make this API available, and then also write
+  a little module providing your old interface that is defined in
+  terms of this API. "Scheme implementors," in this context,
+  includes slib, which isn't really a standalone implementation of
+  Scheme, but is an influential collection of API's and code.</p>
+  <p>The code is tightly bummed. It is clearly written, and
+  commented in my usual voluminous style. This includes notes on
+  porting and implementation-specific optimisations.</p>
+  <h1>What's wrong with the current state of affairs?</h1>
+  <p>It's just amazing to me that in 2002, sorting and merging
+  hasn't been completely put to bed. These are well-understood
+  algorithms, each of them well under a page of code. The
+  straightforward algorithms are basic, core stuff --
+  sophomore-level. But if you tour the major Scheme implementations
+  out there on the Net, you find badly written code that provides
+  extremely spotty coverage of the algorithm space. One
+  implementation even has a buggy implementation that has been in
+  use for about 20 years!</p>
+  <p>Open source-code is a wonderful thing. In a couple of hours, I
+  was able to download and check the sources of 9 Scheme systems.
+  Here are my notes from the systems I checked. You can skip to the
+  next section if you aren't morbidly curious.</p>
+  <h2>slib</h2>
+  <pre>
+  sorted? vector-or-list &lt;
+  merge  list1 list2 &lt;
+  merge! list1 list2 &lt;
+  sort  vector-or-list &lt;
+  sort! vector-or-list &lt;
+                         </pre>
+  <p>Richard O'Keefe's stable list merge sort is right idea, but
+  implemented using gratuitous variable side effects. It also does
+  redundant SET-CDR!s. The vector sort converts to list, merge
+  sorts, then reconverts to vector. This is a bad idea -- non-local
+  pointer chasing bad; vector shuffling good.</p>
+  <h2>MIT Scheme</h2>
+  <pre>
+  sort!       vector &lt;
+  merge-sort! vector &lt;
+  quick-sort! vector &lt;
+
+  sort       vector-or-list &lt;
+  merge-sort vector-or-list &lt;
+  quick-sort vector-or-list &lt;
+                              </pre>
+  <p>Naive vector quicksort: loser, for worst-case performance
+  reasons. List sort by "list-&gt;vector; quicksort;
+  vector-&gt;list," hence also loser. A clever stable vector merge
+  sort, albeit not very bummed.</p>
+  <h2>Scheme 48 & T</h2>
+  <pre>
+  sort-list  list &lt;
+  sort-list! list &lt;
+  list-merge! list1 list2 &lt;
+                            </pre>
+  <p>Bob Nix's implementation of online merge-sort, written in the
+  early 80's. Conses unnecessary bookkeeping structure, which isn't
+  necessary with a proper recursive formulation. Also, does
+  redundant SET-CDR!s. No vector sort. Also, has a bug -- is
+  claimed to be a stable sort, but isn't! To see this, get the S48
+  code, and try</p>
+  <pre>
+    (define (my&lt; x y) (&lt; (quotient x 2) (quotient y 2)))
+    (list-merge! (list 0 2) (list   3) my&lt;)             ; -&gt; (0 2 3)
+                         (list-merge! (list   2) (list 0 3) my&lt;)                ; -&gt; (0 3 2)
+                         </pre>
+  <p>This could be fixed very easily, but it isn't worth it given
+  the other problems with the algorithm.</p>
+  <h2>RScheme</h2>
+  <pre>
+  vector-sort! vector &lt;
+  sort collection &lt;
 </pre>
+  <p>Good basic implementation of vector heapsort, which has O(n lg
+  n) worst-case time. Code ugly, needs tuning. List sort by
+  "list-&gt;vector; sort; vector-&gt;list", which allocates
+  unneeded temp storage. Nothing for stable sorting.</p>
+  <h2>MzScheme</h2>
+  <p>Naive quicksort -- but not available for vector sorting, even
+  though it internally uses a vector. Nothing for stable sorting,
+  and naive quicksort has bad worst-case behaviour.</p>
+  <h2>Bigloo, Scheme-&gt;C</h2>
+  <p>Couldn't find anything -- but maybe I didn't search for the
+  right thing, since the Bigloo names are French. (I invite
+  correction from the Bigloo implementors.)</p>
+  <h2>Gambit</h2>
+  <pre>
+  sort-list list &lt;
+</pre>
+  <p>Nothing for vectors. Simple, slow, unstable merge sort for
+  lists.</p>
+  <h2>Elk</h2>
+  <p>Another naive quicksort. Lists handled by converting to
+  vector.</p>
+  <pre>
+  sort  vector-or-list &lt;
+  sort! vector-or-list &lt;
+</pre>
+  <h2>Chez Scheme</h2>
+  <pre>
+  merge  &lt; list1 list2
+  merge! &lt; list1 list2
+  sort  &lt; list
+  sort! &lt; list
+</pre>
+  <p>These are stable. I have not seen the source code.</p>
+  <h2>Common Lisp</h2>
+  <pre>
+  sort        sequence &lt; [key]
+  stable-sort sequence &lt; [key]
+  merge result-type sequence1 sequence2 &lt; [key]
+</pre>
+  <p>The sort procedures are allowed, but not required, to be
+  destructive.</p>
+  <h2>SML/NJ</h2>
+  <pre>
+  sort: ('a*'a -&gt; bool) -&gt; 'a list -&gt; 'a list
+</pre>
+  <p>"Smooth applicative merge sort," which is stable. There is
+  also a highly bummed quicksort for vectors.</p>
+  <p>The right solution: Implement a full toolbox of carefully
+  written standard sort routines.</p>
+  <p>Having the source available for all of these above-cited
+  Schemes made life a lot easier writing this code. I appreciate
+  the authors making their source available under such open
+  terms.</p>
   <address>
     Editor: Francisco Solsona
   </address>
