@@ -389,6 +389,329 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   side-effects on their input lists in order to guarantee their key
   algorithmic properties (e.g., linear-time operation,
   constant-space stack use).</p>
+  <h1>Procedure specification</h1>
+  <p>The procedures are split into several packages. In a Scheme
+  system that has a module or package system, these procedures
+  should be contained in modules named as follows:</p>
+  <table>
+    <tr>
+      <th>Package name</th>
+      <th>Functionality</th>
+    </tr>
+    <tr>
+      <td>sort-lib</td>
+      <td>General sorting for lists & vectors</td>
+    </tr>
+    <tr>
+      <td>sorted?-lib</td>
+      <td>Sorted predicates for lists & vectors</td>
+    </tr>
+    <tr>
+      <td>list-merge-sort-lib</td>
+      <td>List merge sort</td>
+    </tr>
+    <tr>
+      <td>vector-merge-sort-lib</td>
+      <td>Vector merge sort</td>
+    </tr>
+    <tr>
+      <td>vector-heap-sort-lib</td>
+      <td>Vector heap sort</td>
+    </tr>
+    <tr>
+      <td>vector-quick-sort-lib</td>
+      <td>Vector quick sort</td>
+    </tr>
+    <tr>
+      <td>vector-insert-sort-lib</td>
+      <td>Vector insertion sort</td>
+    </tr>
+    <tr>
+      <td>delndup-lib</td>
+      <td>List and vector delete neighbor duplicates</td>
+    </tr>
+  </table>
+  <p>A Scheme system without a module system should provide all of
+  the bindings defined in all of these modules as components of the
+  "SRFI-32" package.</p>
+  <p>Note that there is no list insert sort package, as you might
+  as well always use list merge sort. The reference
+  implementation's destructive list merge sort will do fewer
+  SET-CDR!s than a destructive insert sort.</p>
+  <h2>Procedure naming and functionality</h2>
+  <p>Almost all of the procedures described below are variants of
+  two basic operations: sorting and merging. These procedures are
+  consistently named by composing a set of basic lexemes to
+  indicate what they do.</p>
+  <table>
+    <tr>
+      <th>Lexeme</th>
+      <th>Meaning</th>
+    </tr>
+    <tr>
+      <td>"sort"</td>
+      <td>The procedure sorts its input data set by some &lt;
+      comparison function.</td>
+    </tr>
+    <tr>
+      <td>"merge"</td>
+      <td>The procedure merges two ordered data sets into a single
+      ordered result.</td>
+    </tr>
+    <tr>
+      <td>"stable"</td>
+      <td>This lexeme indicates that the sort is a stable one.</td>
+    </tr>
+    <tr>
+      <td>"vector"</td>
+      <td>The procedure operates upon vectors.</td>
+    </tr>
+    <tr>
+      <td>"list"</td>
+      <td>The procedure operates upon lists.</td>
+    </tr>
+    <tr>
+      <td>"!"</td>
+      <td>Procedures that end in "!" are allowed, and sometimes
+      required, to reuse their input storage to construct their
+      answer.</td>
+    </tr>
+  </table>
+  <h2>Types of parameters and return values</h2>
+  <p>In the procedures specified below,</p>
+  <ul>
+    <li>A LIS parameter is a list;</li>
+    <li>A V parameter is a vector;</li>
+    <li>A &lt; or = parameter is a procedure accepting two
+    arguments taken from the specified procedure's data set(s), and
+    returning a boolean;</li>
+    <li>START and END parameters are exact, non-negative integers
+    that serve as vector indices selecting a subrange of some
+    associated vector. When specified, they must satisfy the
+    relation <code>0 &lt;= start &lt;= end &lt;= (vector-length
+    v)</code> where V is the associated vector.</li>
+  </ul>
+  <p>Passing values to procedures with these parameters that do not
+  satisfy these types is an error.</p>
+  <p>If a procedure is said to return "unspecified," this means
+  that nothing at all is said about what the procedure returns, not
+  even the number of return values. Such a procedure is not even
+  required to be consistent from call to call in the nature or
+  number of its return values. It is simply required to return a
+  value (or values) that may be passed to a command continuation,
+  e.g. as the value of an expression appearing as a non-terminal
+  subform of a BEGIN expression. Note that in R5RS, this restricts
+  such a procedure to returning a single value; non-R5RS systems
+  may not even provide this restriction.</p>
+  <h2>sort-lib - general sorting package</h2>
+  <p>This library provides basic sorting and merging functionality
+  suitable for general programming. The procedures are named by
+  their semantic properties, i.e., what they do to the data (sort,
+  stable sort, merge, and so forth).</p>
+  <table>
+    <tr>
+      <th>Procedure</th>
+      <th>Suggested algorithm</th>
+    </tr>
+    <tr>
+      <td>list-sorted? lis &lt; -&gt; boolean</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>list-merge lis1 lis2 &lt; -&gt; list</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>list-merge! lis1 lis2 &lt; -&gt; list</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>list-sort lis &lt; -&gt; list</td>
+      <td>(vector heap or quick)</td>
+    </tr>
+    <tr>
+      <td>list-sort! lis &lt; -&gt; list</td>
+      <td>(list merge sort)</td>
+    </tr>
+    <tr>
+      <td>list-stable-sort lis &lt; -&gt; list</td>
+      <td>(vector merge sort)</td>
+    </tr>
+    <tr>
+      <td>list-stable-sort! lis &lt; -&gt; list</td>
+      <td>(list merge sort)</td>
+    </tr>
+    <tr>
+      <td>list-delete-neighbor-dups lis = -&gt; list</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>list-delete-neighbor-dups! lis = -&gt; list</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>vector-sorted? v &lt; [start end] -&gt; boolean</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>vector-merge v1 v2 &lt; [start1 end1 start2 end2] -&gt;
+      vector</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>vector-merge! v v1 v2 &lt; [start start1 end1 start2
+      end2] -&gt; unspecific</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>vector-sort v &lt; [start end] -&gt; vector</td>
+      <td>(heap or quick sort)</td>
+    </tr>
+    <tr>
+      <td>vector-sort! v &lt; [start end] -&gt; unspecific</td>
+      <td>(heap or quick sort)</td>
+    </tr>
+    <tr>
+      <td>vector-stable-sort v &lt; [start end] -&gt; vector</td>
+      <td>(vector merge sort)</td>
+    </tr>
+    <tr>
+      <td>vector-stable-sort! v &lt; [start end] -&gt;
+      unspecific</td>
+      <td>(vector merge sort)</td>
+    </tr>
+    <tr>
+      <td>vector-delete-neighbor-dups v = [start end] -&gt;
+      vector</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>vector-delete-neighbor-dups! v = [start end] -&gt;
+      end'</td>
+      <td></td>
+    </tr>
+  </table>
+  <p>LIST-SORTED? and VECTOR-SORTED? return true if their input
+  list or vector is in sorted order, as determined by their &lt;
+  comparison parameter.</p>
+  <p>All four merge operations are stable: an element of the
+  initial list LIS1 or vector V1 will come before an
+  equal-comparing element in the second list LIS2 or vector V2 in
+  the result.</p>
+  <p>The procedures</p>
+  <ul>
+    <li>LIST-MERGE</li>
+    <li>LIST-SORT</li>
+    <li>LIST-STABLE-SORT</li>
+    <li>LIST-DELETE-NEIGHBOR-DUPS</li>
+  </ul>
+  <p>do not alter their inputs and are allowed to return a value
+  that shares a common tail with a list argument.</p>
+  <p>The procedures</p>
+  <ul>
+    <li>LIST-SORT!</li>
+    <li>LIST-STABLE-SORT!</li>
+  </ul>
+  <p>are "linear update" operators -- they are allowed, but not
+  required, to alter the cons cells of their arguments to produce
+  their results.</p>
+  <p>On the other hand, the procedures</p>
+  <ul>
+    <li>LIST-DELETE-NEIGHBOR-DUPS!</li>
+    <li>LIST-MERGE!</li>
+  </ul>
+  <p>make only a single, iterative, linear-time pass over their
+  argument lists, using SET-CDR!s to rearrange the cells of the
+  lists into the final result -- they work "in place." Hence, any
+  cons cell appearing in the result must have originally appeared
+  in an input. The intent of this iterative-algorithm commitment is
+  to allow the programmer to be sure that if, for example,
+  LIST-MERGE! is asked to merge two ten-million-element lists, the
+  operation will complete without performing some extremely
+  (possibly twenty-million) deep recursion.</p>
+  <p>The vector procedures</p>
+  <ul>
+    <li>VECTOR-SORT</li>
+    <li>VECTOR-STABLE-SORT</li>
+    <li>VECTOR-DELETE-NEIGHBOR-DUPS</li>
+  </ul>
+  <p>do not alter their inputs, but allocate a fresh vector for
+  their result, of length END-START.</p>
+  <p>The vector procedures</p>
+  <ul>
+    <li>VECTOR-SORT!</li>
+    <li>VECTOR-STABLE-SORT!</li>
+  </ul>
+  <p>sort their data in-place. (But note that VECTOR-STABLE-SORT!
+  may allocate temporary storage proportional to the size of the
+  input -- I am not aware of O(n lg n) stable vector sorting
+  algorithms that run in constant space.)</p>
+  <p>VECTOR-MERGE returns a vector of length
+  <code>(END1-START1)+(END2-START2)</code>.</p>
+  <p>VECTOR-MERGE! writes its result into vector V, beginning at
+  index START0, for indices less than <code>END0 = START0 +
+  (END1-START1) + (END2-START2)</code>. The target subvector
+  <code>V[start0,end0)</code> may not overlap either source
+  subvector <code>V1[start1,end1)</code>
+  <code>V2[start2,end2)</code>.</p>
+  <p>The DELETE-NEIGHBOR-DUP-... procedures: These procedures
+  delete adjacent duplicate elements from a list or a vector, using
+  a given element-equality procedure. The first/leftmost element of
+  a run of equal elements is the one that survives. The list or
+  vector is not otherwise disordered.</p>
+  <p>These procedures are linear time -- much faster than the
+  O(n^2) general duplicate-element deletors that do not assume any
+  "bunching" of elements (such as the ones provided by SRFI-1). If
+  you want to delete duplicate elements from a large list or
+  vector, sort the elements to bring equal items together, then use
+  one of these procedures, for a total time of O(n lg n).</p>
+  <p>The comparison function = passed to these procedures is always
+  applied <code>(= x y)</code> where X comes before Y in the
+  containing list or vector.</p>
+  <ul>
+    <li>
+      <p>LIST-DELETE-NEIGHBOR-DUPS does not alter its input list;
+      its answer may share storage with the input list.</p>
+    </li>
+    <li>
+      <p>VECTOR-DELETE-NEIGHBOR-DUPS does not alter its input
+      vector, but rather allocates a fresh vector to hold the
+      result.</p>
+    </li>
+    <li>
+      <p>LIST-DELETE-NEIGHBOR-DUPS! is permitted, but not required,
+      to mutate its input list in order to construct its
+      answer.</p>
+    </li>
+    <li>
+      <p>VECTOR-DELETE-NEIGHBOR-DUPS! reuses its input vector to
+      hold the answer, packing its answer into the index range
+      [start,end'), where END' is the non-negative exact integer
+      returned as its value. It returns END' as its result. The
+      vector is not altered outside the range [start,end').</p>
+      <p>[Maybe this procedure should take a "target" vector to
+      write?]</p>
+    </li>
+    <li>
+      <p>Examples:</p>
+      <pre>
+        (list-delete-neighbor-dups '(1 1 2 7 7 7 0 -2 -2) =)
+          =&gt; (1 2 7 0 -2)
+
+        (vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) =)
+          =&gt; #(1 2 7 0 -2)
+
+        (vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) = 3 7)
+          =&gt; #(7 0 -2)
+
+        ;; Result left in v[3,9):
+        (let ((v (vector 0 0 0 1 1 2 2 3 3 4 4 5 5 6 6)))
+          (cons (vector-delete-neighbor-dups! v = 3)
+                v))
+           =&gt; (9 . #(0 0 0 1 2 3 4 5 6 4 4 5 5 6 6))
+</pre>
+    </li>
+  </ul>
   <address>
     Editor: Francisco Solsona
   </address>
