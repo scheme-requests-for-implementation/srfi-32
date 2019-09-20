@@ -956,6 +956,27 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
       <td>Either</td>
     </tr>
   </table>
+  <h1>Topics to be resolved during discussion phase</h1>
+  <p>I particularly solicit comments about the following
+  topics.</p>
+  <ul>
+    <li>
+      <p>Include VECTOR-BINARY-SEARCH ?</p>
+      <p>Should we include <code>(VECTOR-BINARY-SEARCH v key&lt;
+      elt-&gt;key key [start end])</code> in the SRFI? It sort of
+      goes with sorting; it's exactly ten lines of code.</p>
+    </li>
+    <li>
+      <p>Comparison function before or after the list/vector
+      argument? Should it be <code>(list-sort &lt; lis)</code> or
+      <code>(list-sort lis &lt;)</code></p>
+      <p>There is overwhelming consistency among the
+      implementations: data first, &lt; after. Only Chez does it
+      differently.</p>
+      <p>I have done it in the backwards-compatible way. But I
+      prefer the &lt; first, data after way.</p>
+    </li>
+  </ul>
   <address>
     Editor: Francisco Solsona
   </address>
