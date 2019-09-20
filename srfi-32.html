@@ -854,7 +854,108 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
           (cons (vector-delete-neighbor-dups! v = 3)
                 v))
            =&gt; (9 . #(0 0 0 1 2 3 4 5 6 4 4 5 5 6 6))
-</pre>
+  </pre>
+  <h1>Algorithmic properties</h1>
+  <p>Different sort and merge algorithms have different properties.
+  Choose the algorithm that matches your needs: &lt; /p&gt;</p>
+  <dl>
+    <dt>Vector insert sort</dt>
+    <dd>
+      <p>Stable, but only suitable for small vectors -- O(n^2).</p>
+    </dd>
+    <dt>Vector quick sort</dt>
+    <dd>
+      <p>Not stable. Is fast on average -- O(n lg n) -- but has bad
+      worst-case behaviour. Has good memory locality for big
+      vectors (unlike heap sort). A clever pivot-picking trick
+      (median of three samples) helps avoid worst-case behaviour,
+      but pathological cases can still blow up.</p>
+    </dd>
+    <dt>Vector heap sort</dt>
+    <dd>
+      <p>Not stable. Guaranteed fast -- O(n lg n) *worst* case.
+      Poor locality on large vectors. A very reliable
+      workhorse.</p>
+    </dd>
+    <dt>Vector merge sort</dt>
+    <dd>
+      <p>Stable. Not in-place -- requires a temporary buffer of
+      equal size. Fast -- O(n lg n) -- and has good memory locality
+      for large vectors.</p>
+      <p>The implementation of vector merge sort provided by this
+      SRFI's reference implementation is, additionally, a "natural"
+      sort, meaning that it exploits existing order in the input
+      data, providing O(n) best case.</p>
+    </dd>
+    <dt>Destructive list merge sort</dt>
+    <dd>
+      <p>Stable, fast and in-place (i.e., allocates no new cons
+      cells). "Fast" means O(n lg n) worse-case, and substantially
+      better if the data is already mostly ordered, all the way
+      down to linear time for a completely-ordered input list
+      (i.e., it is a "natural" sort).</p>
+      <p>Note that sorting lists involves chasing pointers through
+      memory, which can be a loser on modern machine architectures
+      because of poor cache & page locality. Pointer *writing*,
+      which is what the SET-CDR!s of a destructive list-sort
+      algorithm do, is even worse, especially if your Scheme has a
+      generational GC -- the writes will thrash the write-barrier.
+      Sorting vectors has inherently better locality.</p>
+      <p>This SRFIs destructive list merge and merge sort
+      implementations are opportunistic -- they avoid redundant
+      SET-CDR!s, and try to take long already-ordered runs of list
+      structure as-is when doing the merges.</p>
+    </dd>
+    <dt>Pure list merge sort</dt>
+    <dd>
+      <p>Stable and fast -- O(n lg n) worst-case, and possibly
+      better, depending upon the input list (see above).</p>
+    </dd>
+  </dl>
+  <table>
+    <tr>
+      <th>Algorithm</th>
+      <th>Stable?</th>
+      <th>Worst case</th>
+      <th>Average case</th>
+      <th>In-place</th>
+    </tr>
+    <tr>
+      <td>V insert</td>
+      <td>Yes</td>
+      <td>O(n^2)</td>
+      <td>O(n^2)</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>V quick</td>
+      <td>No</td>
+      <td>O(n^2)</td>
+      <td>O(n lg n)</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>V heap</td>
+      <td>No</td>
+      <td>O(n lg n)</td>
+      <td>O(n lg n)</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>V merge</td>
+      <td>Yes</td>
+      <td>O(n lg n)</td>
+      <td>O(n lg n)</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>L merge</td>
+      <td>Yes</td>
+      <td>O(n lg n)</td>
+      <td>O(n lg n)</td>
+      <td>Either</td>
+    </tr>
+  </table>
   <address>
     Editor: Francisco Solsona
   </address>
