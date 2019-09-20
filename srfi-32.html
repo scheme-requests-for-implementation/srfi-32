@@ -144,12 +144,12 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   next section if you aren't morbidly curious.</p>
   <h2>slib</h2>
   <pre>
-  sorted? vector-or-list &lt;
-  merge  list1 list2 &lt;
-  merge! list1 list2 &lt;
-  sort  vector-or-list &lt;
-  sort! vector-or-list &lt;
-                         </pre>
+sorted? vector-or-list &lt;
+merge  list1 list2 &lt;
+merge! list1 list2 &lt;
+sort  vector-or-list &lt;
+sort! vector-or-list &lt;
+</pre>
   <p>Richard O'Keefe's stable list merge sort is right idea, but
   implemented using gratuitous variable side effects. It also does
   redundant SET-CDR!s. The vector sort converts to list, merge
@@ -157,24 +157,24 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   pointer chasing bad; vector shuffling good.</p>
   <h2>MIT Scheme</h2>
   <pre>
-  sort!       vector &lt;
-  merge-sort! vector &lt;
-  quick-sort! vector &lt;
+sort!       vector &lt;
+merge-sort! vector &lt;
+quick-sort! vector &lt;
 
-  sort       vector-or-list &lt;
-  merge-sort vector-or-list &lt;
-  quick-sort vector-or-list &lt;
-                              </pre>
+sort       vector-or-list &lt;
+merge-sort vector-or-list &lt;
+quick-sort vector-or-list &lt;
+</pre>
   <p>Naive vector quicksort: loser, for worst-case performance
   reasons. List sort by "list-&gt;vector; quicksort;
   vector-&gt;list," hence also loser. A clever stable vector merge
   sort, albeit not very bummed.</p>
   <h2>Scheme 48 & T</h2>
   <pre>
-  sort-list  list &lt;
-  sort-list! list &lt;
-  list-merge! list1 list2 &lt;
-                            </pre>
+sort-list  list &lt;
+sort-list! list &lt;
+list-merge! list1 list2 &lt;
+</pre>
   <p>Bob Nix's implementation of online merge-sort, written in the
   early 80's. Conses unnecessary bookkeeping structure, which isn't
   necessary with a proper recursive formulation. Also, does
@@ -182,16 +182,16 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   claimed to be a stable sort, but isn't! To see this, get the S48
   code, and try</p>
   <pre>
-    (define (my&lt; x y) (&lt; (quotient x 2) (quotient y 2)))
-    (list-merge! (list 0 2) (list   3) my&lt;)             ; -&gt; (0 2 3)
-                         (list-merge! (list   2) (list 0 3) my&lt;)                ; -&gt; (0 3 2)
-                         </pre>
+(define (my&lt; x y) (&lt; (quotient x 2) (quotient y 2)))
+(list-merge! (list 0 2) (list   3) my&lt;)  ; -&gt; (0 2 3)
+(list-merge! (list   2) (list 0 3) my&lt;)  ; -&gt; (0 3 2)
+</pre>
   <p>This could be fixed very easily, but it isn't worth it given
   the other problems with the algorithm.</p>
   <h2>RScheme</h2>
   <pre>
-  vector-sort! vector &lt;
-  sort collection &lt;
+vector-sort! vector &lt;
+sort collection &lt;
 </pre>
   <p>Good basic implementation of vector heapsort, which has O(n lg
   n) worst-case time. Code ugly, needs tuning. List sort by
@@ -207,7 +207,7 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   correction from the Bigloo implementors.)</p>
   <h2>Gambit</h2>
   <pre>
-  sort-list list &lt;
+sort-list list &lt;
 </pre>
   <p>Nothing for vectors. Simple, slow, unstable merge sort for
   lists.</p>
@@ -215,28 +215,28 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   <p>Another naive quicksort. Lists handled by converting to
   vector.</p>
   <pre>
-  sort  vector-or-list &lt;
-  sort! vector-or-list &lt;
+sort  vector-or-list &lt;
+sort! vector-or-list &lt;
 </pre>
   <h2>Chez Scheme</h2>
   <pre>
-  merge  &lt; list1 list2
-  merge! &lt; list1 list2
-  sort  &lt; list
-  sort! &lt; list
+merge  &lt; list1 list2
+merge! &lt; list1 list2
+sort  &lt; list
+sort! &lt; list
 </pre>
   <p>These are stable. I have not seen the source code.</p>
   <h2>Common Lisp</h2>
   <pre>
-  sort        sequence &lt; [key]
-  stable-sort sequence &lt; [key]
-  merge result-type sequence1 sequence2 &lt; [key]
+sort        sequence &lt; [key]
+stable-sort sequence &lt; [key]
+merge result-type sequence1 sequence2 &lt; [key]
 </pre>
   <p>The sort procedures are allowed, but not required, to be
   destructive.</p>
   <h2>SML/NJ</h2>
   <pre>
-  sort: ('a*'a -&gt; bool) -&gt; 'a list -&gt; 'a list
+sort: ('a*'a -&gt; bool) -&gt; 'a list -&gt; 'a list
 </pre>
   <p>"Smooth applicative merge sort," which is stable. There is
   also a highly bummed quicksort for vectors.</p>
@@ -328,12 +328,10 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
       stability.</p>
       <p>This is due to the definition of equality, given a &lt;
       comparator:</p>
-      <pre>
-(and (not (&lt; x y)) (not (&lt; y x)))
-      </pre>
+      <pre>(and (not (&lt; x y)) (not (&lt; y x)))</pre>
       <p>The definition is rather different, given a &lt;=
       comparator:</p>
-      <pre> (and (&lt;= x y) (&lt;= x y))</pre>
+      <pre>(and (&lt;= x y) (&lt;= x y))</pre>
     </li>
     <li>
       <p>A "stable" merge is one that reliably favors one of its
@@ -346,9 +344,9 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
       absolute value using the stable merge operation
       LIST-MERGE</p>
       <pre>
-    (list-merge '(0 -2 4 8 -10) '(-1 3 -4 7)
-                (lambda (x y) (&lt; (abs x) (abs y))))
-                                 </pre>
+(list-merge '(0 -2 4 8 -10) '(-1 3 -4 7)
+            (lambda (x y) (&lt; (abs x) (abs y))))
+</pre>
       <p>reliably places the 4 of the first list before the
       equal-comparing -4 of the second list:</p>
       <pre>(0 -1 -2 4 -4 7 8 -10)</pre>
@@ -696,21 +694,20 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
     <li>
       <p>Examples:</p>
       <pre>
-        (list-delete-neighbor-dups '(1 1 2 7 7 7 0 -2 -2) =)
-          =&gt; (1 2 7 0 -2)
+(list-delete-neighbor-dups '(1 1 2 7 7 7 0 -2 -2) =)
+  =&gt; (1 2 7 0 -2)
 
-        (vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) =)
-          =&gt; #(1 2 7 0 -2)
+(vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) =)
+  =&gt; #(1 2 7 0 -2)
 
-        (vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) = 3 7)
-          =&gt; #(7 0 -2)
+(vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) = 3 7)
+  =&gt; #(7 0 -2)
 
-        ;; Result left in v[3,9):
-        (let ((v (vector 0 0 0 1 1 2 2 3 3 4 4 5 5 6 6)))
-          (cons (vector-delete-neighbor-dups! v = 3)
-                v))
-           =&gt; (9 . #(0 0 0 1 2 3 4 5 6 4 4 5 5 6 6))
-</pre>
+;; Result left in v[3,9):
+(let ((v (vector 0 0 0 1 1 2 2 3 3 4 4 5 5 6 6)))
+  (cons (vector-delete-neighbor-dups! v = 3)
+        v))
+   =&gt; (9 . #(0 0 0 1 2 3 4 5 6 4 4 5 5 6 6))</pre>
     </li>
   </ul>
   <h2>Algorithm-specific sorting packages</h2>
@@ -722,20 +719,18 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   particular algorithm can use one of these packages.</p>
   <h3>sorted?-lib - sorted predicates</h3>
   <pre>
-  list-sorted? lis &lt;             -&gt; boolean
-  vector-sorted? v &lt; [start end] -&gt; boolean
-  </pre>
+list-sorted? lis &lt;             -&gt; boolean
+vector-sorted? v &lt; [start end] -&gt; boolean</pre>
   <p>Return #f iff there is an adjacent pair ... X Y ... in the
   input list or vector such that Y &lt; X. The optional START/END
   range arguments restrict VECTOR-SORTED? to the indicated
   subvector.</p>
   <h3>list-merge-sort-lib - list merge sort</h3>
   <pre>
-    list-merge-sort  lis &lt;      -&gt; list
-    list-merge-sort! lis &lt;      -&gt; list
-    list-merge  lis1 lis2 &lt;     -&gt; list
-    list-merge! lis1 lis2 &lt;     -&gt; list
-  </pre>
+list-merge-sort  lis &lt;      -&gt; list
+list-merge-sort! lis &lt;      -&gt; list
+list-merge  lis1 lis2 &lt;     -&gt; list
+list-merge! lis1 lis2 &lt;     -&gt; list</pre>
   <p>The sort procedures sort their data using a list merge sort,
   which is stable. (The reference implementation is, additionally,
   a "natural" sort. See below for the properties of this
@@ -750,11 +745,10 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   before an equal-comparing element in LIS2 in the result list.</p>
   <h3>vector-merge-sort-lib - vector merge sort</h3>
   <pre>
-    vector-merge-sort  v &lt; [start end temp]                     -&gt; vector
-    vector-merge-sort! v &lt; [start end temp]                     -&gt; unspecific
-    vector-merge  v1 v2 &lt; [start1 end1 start2 end2]             -&gt; vector
-    vector-merge! v v1 v2 &lt; [start0 start1 end1 start2 end2]    -&gt; unspecific
-  </pre>
+vector-merge-sort  v &lt; [start end temp]                     -&gt; vector
+vector-merge-sort! v &lt; [start end temp]                     -&gt; unspecific
+vector-merge  v1 v2 &lt; [start1 end1 start2 end2]             -&gt; vector
+vector-merge! v v1 v2 &lt; [start0 start1 end1 start2 end2]    -&gt; unspecific</pre>
   <p>The sort procedures sort their data using vector merge sort,
   which is stable. (The reference implementation is, additionally,
   a "natural" sort. See below for the properties of this
@@ -781,38 +775,35 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   V2[start2,end2).</code></p>
   <h3>vector-heap-sort-lib - vector heap sort</h3>
   <pre>
-    heap-sort  v &lt; [start end] -&gt; vector
-    heap-sort! v &lt; [start end] -&gt; unspecific
-  </pre>
+heap-sort  v &lt; [start end] -&gt; vector
+heap-sort! v &lt; [start end] -&gt; unspecific</pre>
   <p>These procedures sort their data using heap sort, which is not
   a stable sorting algorithm.</p>
   <p>HEAP-SORT returns a vector of length END-START. HEAP-SORT! is
   in-place, leaving its result in V[start,end).</p>
   <h3>vector-quick-sort-lib - vector quick sort</h3>
   <pre>
-    quick-sort  v &lt; [start end] -&gt; vector
-    quick-sort! v &lt; [start end] -&gt; unspecific
-  </pre>
+quick-sort  v &lt; [start end] -&gt; vector
+quick-sort! v &lt; [start end] -&gt; unspecific</pre>
   <p>These procedures sort their data using quick sort, which is
   not a stable sorting algorithm.</p>
   <p>QUICK-SORT returns a vector of length END-START. QUICK-SORT!
   is in-place, leaving its result in V[start,end).</p>
   <h3>vector-insert-sort-lib - vector insertion sort</h3>
   <pre>
-    insert-sort  v &lt; [start end] -&gt; vector
-    insert-sort! v &lt; [start end] -&gt; unspecific
-  </pre>
+insert-sort  v &lt; [start end] -&gt; vector
+insert-sort! v &lt; [start end] -&gt; unspecific</pre>
   <p>These procedures stably sort their data using insertion
   sort.</p>
   <p>INSERT-SORT returns a vector of length END-START. INSERT-SORT!
   is in-place, leaving its result in V[start,end).</p>
   <h3>delndup-lib - list and vector delete neighbor duplicates</h3>
   <pre>
-    list-delete-neighbor-dups  lis = -&gt; list
-    list-delete-neighbor-dups! lis = -&gt; list
+list-delete-neighbor-dups  lis = -&gt; list
+list-delete-neighbor-dups! lis = -&gt; list
 
-    vector-delete-neighbor-dups  v = [start end] -&gt; vector
-    vector-delete-neighbor-dups! v = [start end] -&gt; end'
+vector-delete-neighbor-dups  v = [start end] -&gt; vector
+vector-delete-neighbor-dups! v = [start end] -&gt; end'
 </pre>
   <p>These procedures delete adjacent duplicate elements from a
   list or a vector, using a given element-equality procedure =. The
@@ -840,21 +831,20 @@ heap-sort!  quick-sort!  insert-sort!  list-merge-sort!  vector-merge-sort!
   outside the range [start,end').</p>
   <p>Examples:</p>
   <pre>
-        (list-delete-neighbor-dups '(1 1 2 7 7 7 0 -2 -2) =)
-          =&gt; (1 2 7 0 -2)
+(list-delete-neighbor-dups '(1 1 2 7 7 7 0 -2 -2) =)
+  =&gt; (1 2 7 0 -2)
 
-        (vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) =)
-          =&gt; #(1 2 7 0 -2)
+(vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) =)
+  =&gt; #(1 2 7 0 -2)
 
-        (vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) = 3 7)
-          =&gt; #(7 0 -2)
+(vector-delete-neighbor-dups '#(1 1 2 7 7 7 0 -2 -2) = 3 7)
+  =&gt; #(7 0 -2)
 
-        ;; Result left in v[3,9):
-        (let ((v (vector 0 0 0 1 1 2 2 3 3 4 4 5 5 6 6)))
-          (cons (vector-delete-neighbor-dups! v = 3)
-                v))
-           =&gt; (9 . #(0 0 0 1 2 3 4 5 6 4 4 5 5 6 6))
-  </pre>
+;; Result left in v[3,9):
+(let ((v (vector 0 0 0 1 1 2 2 3 3 4 4 5 5 6 6)))
+  (cons (vector-delete-neighbor-dups! v = 3)
+        v))
+   =&gt; (9 . #(0 0 0 1 2 3 4 5 6 4 4 5 5 6 6))</pre>
   <h1>Algorithmic properties</h1>
   <p>Different sort and merge algorithms have different properties.
   Choose the algorithm that matches your needs: &lt; /p&gt;</p>
